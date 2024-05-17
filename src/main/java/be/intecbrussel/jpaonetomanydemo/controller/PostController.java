@@ -1,61 +1,76 @@
 package be.intecbrussel.jpaonetomanydemo.controller;
-;
-import be.intecbrussel.jpaonetomanydemo.exception.ResourceNotFoundException;
-import be.intecbrussel.jpaonetomanydemo.model.Comment;
+
 import be.intecbrussel.jpaonetomanydemo.model.Post;
-import be.intecbrussel.jpaonetomanydemo.repository.PostRepository;
+import be.intecbrussel.jpaonetomanydemo.service.PostServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.validation.Valid;
+import org.springframework.web.servlet.ModelAndView;
 
 
-
-@RestController
+@Controller
 public class PostController {
+
+    private PostServiceImpl postService;
+
     @Autowired
-    private PostRepository postRepository;
-
-    @GetMapping("/posts")
-    public Page<Post> getAllPosts(Pageable pageable) {
-        return postRepository.findAll(pageable);
+    public PostController(PostServiceImpl postService) {
+        this.postService = postService;
     }
 
-    @PostMapping("/posts")
-    public Post createPost(@Valid @RequestBody Post post) {
-        return postRepository.save(post);
+    @GetMapping("/")
+    public String viewHomepage(Model model) {
+        model.addAttribute("ListPosts", postService.getAllPost());
+        return "index";
     }
 
-    @PutMapping("/posts/{postId}")
-    public Post updatePost(@PathVariable Long postId, @Valid @RequestBody Post postRequest) {
-        return postRepository.findById(postId).map(post -> {
-            post.setTitle(postRequest.getTitle());
-            post.setDescription(postRequest.getDescription());
-            post.setContent(postRequest.getContent());
-            return postRepository.save(post);
-        }).orElseThrow(() -> new ResourceNotFoundException("PostId " + postId + " not found"));
+     @GetMapping("/showNewPostForm")
+      public ModelAndView showNewPostForm() {
+          Post post = new Post();
+          ModelAndView modelAndView = new ModelAndView("new_post"); // Set view name
+          modelAndView.addObject("post", post);
+          return modelAndView;
+      }
+
+
+   /* @GetMapping("/showNewPostForm")
+    public String showNewPostForm(Model model) {
+        model.addAttribute("post", new Post());
+        return "new_post";
+    }*/
+
+    @PostMapping("/createPost")
+    public String createPost(@ModelAttribute("post") Post post) {
+        postService.savePost(post);
+        return "redirect:/";
     }
 
-    @DeleteMapping("/posts/{postId}")
-    public ResponseEntity<?> deletePost(@PathVariable Long postId) {
-        return postRepository.findById(postId).map(post -> {
-            postRepository.delete(post);
-            return ResponseEntity.ok().build();
-        }).orElseThrow(() -> new ResourceNotFoundException("PostId " + postId + " not found"));
+    @GetMapping("/updatePost/{id}")
+    public String showUpdatePostForm(@PathVariable(value = "id") Long postId, Model model) {
+        Post post = postService.getPostById(postId);
+        model.addAttribute("post", post);
+        return "edit_post";
     }
 
-   /* @GetMapping("/posts/{postId}}")
-    public Post findById(@PathVariable  Long postId){
-        return postRepository. findById(postId).orElse(null);
-
+    @PostMapping("/updatePost/{id}")
+    public String updatePost(@PathVariable(value="id") Long postId, @ModelAttribute("post") Post post){
+        Post existingPost = postService.getPostById(postId);
+        existingPost.setTitle(post.getTitle());
+        existingPost.setDescription(post.getDescription());
+        existingPost.setContent(post.getContent());
+        postService.savePost(existingPost);
+        return "redirect:/";
     }
-*/
 
-    @GetMapping("/posts/{postId}")
-    public Post getPosts(Long postId) {
-        return postRepository.findById(postId).orElse(null);
+    @GetMapping("/deletePost/{id}")
+    public String deletePost(@PathVariable(value = "id") Long postId) {
+        postService.deletePostById(postId);
+        return "redirect:/";
     }
+
+
 }
+
+

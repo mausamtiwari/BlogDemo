@@ -39,3 +39,4 @@ public abstract class AuditModel implements Serializable {
         this.updatedAt = updatedAt;
     }
 }
+

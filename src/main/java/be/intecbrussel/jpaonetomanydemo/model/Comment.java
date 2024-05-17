@@ -20,11 +20,16 @@ public class Comment extends AuditModel {
     private String text;
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "post_id", nullable = false)
-    // @OnDelete(action = OnDeleteAction.CASCADE)
-    // @JsonIgnore
+    //@OnDelete(action = OnDeleteAction.CASCADE)
+    @JsonIgnore
     private Post post;
 
     public Comment() {
+    }
+
+    public Comment(String text, Post post) {
+        this.text = text;
+        this.post = post;
     }
 
     public Comment(String text) {
