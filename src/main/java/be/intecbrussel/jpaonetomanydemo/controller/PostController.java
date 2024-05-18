@@ -3,11 +3,14 @@ package be.intecbrussel.jpaonetomanydemo.controller;
 import be.intecbrussel.jpaonetomanydemo.model.Post;
 import be.intecbrussel.jpaonetomanydemo.service.PostServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import org.springframework.web.servlet.ModelAndView;
+
+import java.util.List;
 
 
 @Controller
@@ -22,24 +25,16 @@ public class PostController {
 
     @GetMapping("/")
     public String viewHomepage(Model model) {
-        model.addAttribute("ListPosts", postService.getAllPost());
-        return "index";
+       return findPostPaginated(1,model);
     }
 
-     @GetMapping("/showNewPostForm")
-      public ModelAndView showNewPostForm() {
-          Post post = new Post();
-          ModelAndView modelAndView = new ModelAndView("new_post"); // Set view name
-          modelAndView.addObject("post", post);
-          return modelAndView;
-      }
-
-
-   /* @GetMapping("/showNewPostForm")
-    public String showNewPostForm(Model model) {
-        model.addAttribute("post", new Post());
-        return "new_post";
-    }*/
+    @GetMapping("/showNewPostForm")
+    public ModelAndView showNewPostForm() {
+        Post post = new Post();
+        ModelAndView modelAndView = new ModelAndView("new_post"); // Set view name
+        modelAndView.addObject("post", post);
+        return modelAndView;
+    }
 
     @PostMapping("/createPost")
     public String createPost(@ModelAttribute("post") Post post) {
@@ -55,7 +50,7 @@ public class PostController {
     }
 
     @PostMapping("/updatePost/{id}")
-    public String updatePost(@PathVariable(value="id") Long postId, @ModelAttribute("post") Post post){
+    public String updatePost(@PathVariable(value = "id") Long postId, @ModelAttribute("post") Post post) {
         Post existingPost = postService.getPostById(postId);
         existingPost.setTitle(post.getTitle());
         existingPost.setDescription(post.getDescription());
@@ -68,6 +63,18 @@ public class PostController {
     public String deletePost(@PathVariable(value = "id") Long postId) {
         postService.deletePostById(postId);
         return "redirect:/";
+    }
+
+    @GetMapping("/page/{pageNo}")
+    public String findPostPaginated(@PathVariable(value ="pageNo") int pageNo, Model model) {
+        int pageSize = 5;
+        Page<Post> page = postService.findPostPaginated(pageNo, pageSize);
+        List<Post> postList = page.getContent();
+        model.addAttribute("currentPage", pageNo);
+        model.addAttribute("totalPages", page.getTotalPages());
+        model.addAttribute("totalItems", page.getTotalElements()); // returns the number of elements
+        model.addAttribute("postList", postList);
+        return "index";
     }
 
 

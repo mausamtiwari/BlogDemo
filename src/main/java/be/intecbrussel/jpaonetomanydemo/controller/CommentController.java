@@ -5,9 +5,13 @@ import be.intecbrussel.jpaonetomanydemo.model.Post;
 import be.intecbrussel.jpaonetomanydemo.service.CommentServiceImpl;
 import be.intecbrussel.jpaonetomanydemo.service.PostServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
 
 @Controller
 public class CommentController {
@@ -20,31 +24,27 @@ public class CommentController {
         this.postService = postService;
     }
 
-
-    /*@GetMapping("/posts/{postId}/comments")
-    public String getAllCommentsByPostId(@PathVariable(value = "postId") Long postId, Model model) {
-        model.addAttribute("comments", commentService.getAllCommentsByPostID(postId));
-        return "index";
-    }*/
-
     @GetMapping("/posts/{postId}/comments")
-    public String getAllCommentsByPostId(@PathVariable(value = "postId") Long postId, Model model) {
-        model.addAttribute("comments", commentService.getAllCommentsByPostId(postId));
+    public String getAllCommentsByPostId(@PathVariable(value = "postId") Long postId,
+                                         @RequestParam(name = "page", defaultValue = "1") int pageNo,
+                                         Model model) {
+        int pageSize = 5;
+        Page<Comment> page = commentService.findCommentPaginated(postId, pageNo, pageSize);
+        List<Comment> commentList = page.getContent();
+        model.addAttribute("currentPage", pageNo);
+        model.addAttribute("totalPages", page.getTotalPages());
+        model.addAttribute("totalItems", page.getTotalElements()); // returns the number of rows
+        model.addAttribute("commentList", commentList);
+
         Post post = postService.getPostById(postId);
         model.addAttribute("post", post);
         model.addAttribute("comment", new Comment());
-        return "view_comments";
+        return "comments";
     }
 
-
-  /*  @PostMapping("/posts/{postId}/comments")
-    public String createComment(@PathVariable(value = "postId") Comment comment) {
-        commentService.saveComment(comment);
-        return "redirect:/";
-    }*/
-
     @PostMapping("/posts/{postId}/comments")
-    public String createComment(@PathVariable(value = "postId") Long postId, @ModelAttribute("comment") Comment comment) {
+    public String createComment(@PathVariable(value = "postId") Long postId,
+                                @ModelAttribute("comment") Comment comment) {
         Post post = postService.getPostById(postId);
         comment.setPost(post);
         commentService.saveComment(comment);
@@ -78,23 +78,7 @@ public class CommentController {
         return "redirect:/posts/" + postId + "/comments";
     }
 
-    /*@PutMapping("/posts/{postId}/comments/{commentId}")
-    public Comment updateComment(@PathVariable(value = "postId") Long postId, @PathVariable(value = "commentId") Long commentId, @Valid @RequestBody Comment commentRequest) {
-        if (!postRepository.existsById(postId)) {
-            throw new ResourceNotFoundException("PostId " + postId + " not found");
-        }
-        return commentRepository.findById(commentId).map(comment -> {
-            comment.setText(commentRequest.getText());
-            return commentRepository.save(comment);
-        }).orElseThrow(() -> new ResourceNotFoundException("CommentId " + commentId + "not found"));
-    }
 
-    @DeleteMapping("/posts/{postId}/comments/{commentId}")
-    public ResponseEntity<?> deleteComment(@PathVariable(value = "postId") Long postId, @PathVariable(value = "commentId") Long commentId) {
-        return commentRepository.findByIdAndPostId(commentId, postId).map(comment -> {
-            commentRepository.delete(comment);
-            return ResponseEntity.ok().build();
-        }).orElseThrow(() -> new ResourceNotFoundException("Comment not found with id " + commentId + " and postId " + postId));
-    }*/
 };
+
 
