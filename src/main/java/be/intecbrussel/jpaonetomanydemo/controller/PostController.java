@@ -23,25 +23,28 @@ public class PostController {
         this.postService = postService;
     }
 
+    // Handles the root URL, redirecting to the first page of paginated posts
     @GetMapping("/")
     public String viewHomepage(Model model) {
        return findPostPaginated(1,model);
     }
 
+    // Shows the form to create a new post
     @GetMapping("/showNewPostForm")
-    public ModelAndView showNewPostForm() {
+    public String showNewPostForm(Model model) {
         Post post = new Post();
-        ModelAndView modelAndView = new ModelAndView("new_post"); // Set view name
-        modelAndView.addObject("post", post);
-        return modelAndView;
+        model.addAttribute("post", post);
+        return "new_post";
     }
 
+    // Handles form submission for creating a new post
     @PostMapping("/createPost")
     public String createPost(@ModelAttribute("post") Post post) {
         postService.savePost(post);
         return "redirect:/";
     }
 
+    // Shows the form to update an existing post
     @GetMapping("/updatePost/{id}")
     public String showUpdatePostForm(@PathVariable(value = "id") Long postId, Model model) {
         Post post = postService.getPostById(postId);
@@ -49,6 +52,7 @@ public class PostController {
         return "edit_post";
     }
 
+    // Handles form submission for updating an existing post
     @PostMapping("/updatePost/{id}")
     public String updatePost(@PathVariable(value = "id") Long postId, @ModelAttribute("post") Post post) {
         Post existingPost = postService.getPostById(postId);
@@ -59,12 +63,14 @@ public class PostController {
         return "redirect:/";
     }
 
+    // Handles deleting a post by its ID
     @GetMapping("/deletePost/{id}")
     public String deletePost(@PathVariable(value = "id") Long postId) {
         postService.deletePostById(postId);
         return "redirect:/";
     }
 
+    // Handles pagination for displaying posts
     @GetMapping("/page/{pageNo}")
     public String findPostPaginated(@PathVariable(value ="pageNo") int pageNo, Model model) {
         int pageSize = 5;

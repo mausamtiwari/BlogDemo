@@ -58,7 +58,11 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public Page<Comment> findCommentPaginated(Long postId, int pageNo, int pageSize) {
+        // Creates a Pageable object with the given page number (pageNo) and page size (pageSize)
+        // PageRequest.of(pageNo-1, pageSize) creates a Pageable instance, where pageNo-1 adjusts the page number to be zero-based.
         Pageable pageable = PageRequest.of(pageNo-1, pageSize);
+        // Uses the commentRepository to find comments by the postId with pagination
+        // The method findByPostId takes the postId and pageable as arguments and returns a Page<Comment> containing the comments for that page.
         return commentRepository.findByPostId(postId, pageable);
     }
 }
